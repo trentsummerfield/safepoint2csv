@@ -1,8 +1,13 @@
-import fileinput
-import sys
+import argparse
 import csv
-import re
 import datetime
+import fileinput
+import re
+import sys
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--out-file', default=sys.stdout)
+args = parser.parse_args()
 
 vm_start = re.compile(
     r"""<hotspot_log version='.*?' process='.*?' time_ms='(?P<timestamp>\d+)'>"""
@@ -31,8 +36,10 @@ def parse_log(lines):
         match = safepoint_entry.match(line)
         if match:
             entry = match.groupdict()
-            time = vm_start_time + datetime.timedelta(seconds=float(entry['offset']))
-            entry['timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S.") + str(int(time.microsecond / 1000))
+            time = vm_start_time + datetime.timedelta(
+                seconds=float(entry['offset']))
+            entry['timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S.") + str(
+                int(time.microsecond / 1000))
             yield entry
 
 
@@ -44,7 +51,7 @@ def write_csv(entries, f):
 
 
 def main():
-    write_csv(parse_log(fileinput.input()), sys.stdout)
+    write_csv(parse_log(fileinput.input()), args.out_file)
 
 
 if __name__ == '__main__':
